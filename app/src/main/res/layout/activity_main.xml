@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Hauptinhalt (bisheriges LinearLayout) -->
+    <LinearLayout
+        android:id="@+id/mainLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <!-- Zugriffs-Nachricht -->
+        <LinearLayout
+            android:id="@+id/accessMessageLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Select the folder Music/StreetMusician and give access"
+                android:textColor="#000000"
+                android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/closeMessageButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="X" />
+        </LinearLayout>
+
+        <!-- Erste Button-Zeile -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <Button
+                android:id="@+id/folderButton"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0.2"
+                android:background="@drawable/button_gradient_selector"
+                android:textStyle="bold"
+                android:drawableStart="@drawable/folder_icon"
+                android:contentDescription="Folder Selector"
+                android:padding="8dp"
+                android:text="" />
+
+            <Button
+                android:id="@+id/replayModeButton"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0.1"
+                android:textStyle="bold"
+                android:background="@drawable/button_gradient"
+                android:text="Mode"/>
+
+            <Button
+                android:id="@+id/equalizerButton"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0.08"
+                android:background="@drawable/button_gradient"
+                android:textStyle="bold"
+                android:text="EQ" />
+
+            <Button
+                android:id="@+id/arrangeButton"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0.125"
+                android:background="@drawable/button_gradient"
+                android:textStyle="bold"
+                android:text="Arrange" />
+
+            <Button
+                android:id="@+id/loopButton"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0.125"
+                android:background="@drawable/button_gradient_selector"
+                android:textStyle="bold"
+                android:text="loops" />
+
+            <Button
+                android:id="@+id/pitchButton"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0.125"
+                android:background="@drawable/button_gradient_selector"
+                android:textStyle="bold"
+                android:text="pitch" />
+
+            <Button
+                android:id="@+id/transferButton"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0.125"
+                android:background="@drawable/button_gradient_selector"
+                android:textStyle="bold"
+                android:text="transfer" />
+        </LinearLayout>
+
+        <!-- Fortschrittsbalken -->
+        <FrameLayout
+            android:id="@+id/progressBarContainer"
+            android:layout_width="match_parent"
+            android:layout_height="9dp"
+            android:background="#4c4c4c">
+
+            <View
+                android:id="@+id/progressBarRed"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:background="#FF0000" />
+        </FrameLayout>
+
+        <!-- Songtitel -->
+        <TextView
+            android:id="@+id/trackTitleTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Loading track list..."
+            android:textSize="21sp"
+            android:textStyle="bold"
+            android:padding="8dp"
+            android:background="@android:color/black"
+            android:textColor="@android:color/white" />
+
+        <!-- Große Fußtasten -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <Button
+                android:id="@+id/playNextButton"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:textColor="@android:color/black"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:text="CLICK: Next Song / Fade Out\nORANGE-CLICK: Stop\nHOLD: Back" />
+
+            <FrameLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1">
+
+                <Button
+                    android:id="@+id/volumeButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@android:color/darker_gray"
+                    android:textColor="@android:color/black"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:text="VOL: 50%\n\nCLICK: Volume Up\nHOLD: Volume Down" />
+            </FrameLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Impressum-Button unten links -->
+    <Button
+        android:id="@+id/impressumButton"
+        android:layout_width="wrap_content"
+        android:layout_height="22dp"
+        android:layout_gravity="top|start"
+        android:layout_marginTop="90dp"
+        android:text="Impressum"
+        android:textColor="#B0B0B0"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:background="#80000000" />
+
+    <!-- AddIns-Button unten rechts -->
+    <Button
+        android:id="@+id/licensesButton"
+        android:layout_width="wrap_content"
+        android:layout_height="22dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="90dp"
+        android:text="Licenses"
+        android:textColor="#B0B0B0"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:background="#80000000" />
+</FrameLayout>
