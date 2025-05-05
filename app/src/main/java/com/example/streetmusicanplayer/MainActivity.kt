@@ -2055,16 +2055,17 @@ class MainActivity : AppCompatActivity() {
         val closeButton = dialogView.findViewById<Button>(R.id.closeButton)
 
         infoText.text = """
-        Verwendete Komponenten:
+    Verwendete Komponenten:
 
-        🎚 SoundTouch (www.surina.net/soundtouch)
-        Lizenz: LGPL v2.1 – Änderungen vorgenommen
+    Pitch- und Tempo-Anpassung: 🎚 SoundTouch (www.surina.net/soundtouch)
+    Lizenz: LGPL v2.1 – Änderungen vorgenommen
 
-        🎧 LAME MP3 Encoder (lame.sourceforge.net)
-        Lizenz: LGPL – verwendet in Android über libandroidlame
+    MP3-Encoding: 🎧 LAME MP3 Encoder (lame.sourceforge.net)
+    Lizenz: GPL v2 – verwendet in Android über libandroidlame
 
-        Diese Bibliotheken ermöglichen Pitch- und Tempo-Anpassung sowie MP3-Encoding.
-    """.trimIndent()
+    💾 Quellcode verfügbar unter:
+    https://github.com/gotthalmseder/StreetMusicianPlayer
+""".trimIndent()
 
         val dialog = AlertDialog.Builder(this)
             .setView(dialogView)
