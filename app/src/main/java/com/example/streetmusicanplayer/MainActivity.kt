@@ -84,7 +84,8 @@ class MainActivity : AppCompatActivity() {
     private var mediaPlayer: MediaPlayer? = null
     private var fadeOutHandler: Handler? = null
     private var fadeOutRunnable: Runnable? = null
-    private var tracks: List<Uri> = listOf()
+    var tracks: MutableList<Uri> = mutableListOf()
+    //private var tracks: List<Uri> = listOf()
     private var baseUri: Uri? = null
     private var backScrollTimer: Timer? = null
     private var isBackScrolling = false
@@ -468,19 +469,7 @@ class MainActivity : AppCompatActivity() {
                         folderButton.text = currentFolder
                         folderButton.setBackgroundResource(R.drawable.button_gradient_selector)
 
-                        stopPlayer(startNext = false)
-                        isPlaying = false
-                        isGreen = false
-                        isYellow = false
-                        isOrange = false
-                        autoNext = false
-                        endCountdownRunnable?.let { endCountdownHandler?.removeCallbacks(it) }
-                        endCountdownHandler = null
-                        setButtonToRed()
-                        val redBar = findViewById<View>(R.id.progressBarRed)
-                        val layoutParams = redBar.layoutParams
-                        layoutParams.width = 0
-                        redBar.layoutParams = layoutParams
+                        resetPlaybackStateAndProgressBar()
 
                         // ✅ Zeige sofort CACHED Trackliste
                         val stored = TrackInfoStorage.load(this@MainActivity, currentFolder)
@@ -492,7 +481,7 @@ class MainActivity : AppCompatActivity() {
                         } else {
                             cachedTrackInfosByFolder.remove(currentFolder)
                             isTrackInfoLoaded = false
-                            tracks = emptyList()
+                            tracks = mutableListOf()
                             currentTrackIndex = -1
                             trackTitleTextView.text = "[No tracks]"
                         }
@@ -524,6 +513,7 @@ class MainActivity : AppCompatActivity() {
                 else -> false
             }
         }
+
 
 
         playNextButton.setOnTouchListener { view, event ->
@@ -790,8 +780,27 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.licensesButton).setOnClickListener {
             showAddInsDialog()
         }
+    }
 
 
+    private fun resetPlaybackStateAndProgressBar() {
+        stopPlayer(startNext = false)
+
+        isPlaying = false
+        isGreen = false
+        isYellow = false
+        isOrange = false
+        autoNext = false
+
+        endCountdownRunnable?.let { endCountdownHandler?.removeCallbacks(it) }
+        endCountdownHandler = null
+
+        setButtonToRed()
+
+        val redBar = findViewById<View>(R.id.progressBarRed)
+        val layoutParams = redBar.layoutParams
+        layoutParams.width = 0
+        redBar.layoutParams = layoutParams
     }
 
     private fun setupArrangeLauncher() {
@@ -799,9 +808,12 @@ class MainActivity : AppCompatActivity() {
             if (result.resultCode == RESULT_OK) {
                 val data = result.data
 
-                val resetStyle = data?.getBooleanExtra("resetArrangeStyle", false) ?: false
-                if (resetStyle) {
+                if (data?.getBooleanExtra("resetArrangeStyle", false) == true) {
                     resetArrangeButtonStyle()
+                }
+
+                if (data?.getBooleanExtra("resetPlayback", false) == true) {
+                    resetPlaybackStateAndProgressBar()
                 }
 
                 val jsonString = data?.getStringExtra("updatedTrackInfos")
@@ -815,8 +827,8 @@ class MainActivity : AppCompatActivity() {
                             val time = obj.getLong("time")
                             TrackInfo(uri.toString(), name, time)
                         }
-                        cachedTrackInfosByFolder[currentFolder] = restoredList
 
+                        cachedTrackInfosByFolder[currentFolder] = restoredList
                         Log.d("ARRANGE", "✅ Neue Reihenfolge übernommen")
 
                         updateTracksFromTrackInfos()
@@ -840,7 +852,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateTracksFromTrackInfos() {
         val infos = cachedTrackInfosByFolder[currentFolder] ?: return
-        tracks = infos.map { it.uri }
+        tracks = infos.map { Uri.parse(it.uri.toString()) }.toMutableList()
 
         // Prüfe, ob der aktuelle Index noch gültig ist
         if (currentTrackIndex >= tracks.size) {
@@ -1189,6 +1201,8 @@ class MainActivity : AppCompatActivity() {
                                     cachedTrackInfosByFolder[currentFolder] = updatedInfos
                                 }
                                 removeCurrentTrackFromList()
+                                resetPlaybackStateAndProgressBar()
+                                justSwitchedFolder = true
                             }
 
                             dismissTrackUpdateDialog()
@@ -1221,6 +1235,9 @@ class MainActivity : AppCompatActivity() {
                                     cachedTrackInfosByFolder["basket"] = basketInfos
                                 }
                                 removeCurrentTrackFromList()
+                                resetPlaybackStateAndProgressBar()
+                                justSwitchedFolder = true
+
                             } else {
                                 Toast.makeText(this@MainActivity, "❌ Move failed", Toast.LENGTH_SHORT).show()
                             }
@@ -1256,23 +1273,28 @@ class MainActivity : AppCompatActivity() {
 
     private fun removeCurrentTrackFromList() {
         if (currentTrackIndex in tracks.indices) {
-            // 1. Track aus der URI-Liste entfernen
-            tracks = tracks.toMutableList().also { it.removeAt(currentTrackIndex) }
+            // 1. URI sichern
+            val removedUri = tracks[currentTrackIndex]
 
-            // 2. TrackInfo aus der Ordner-spezifischen Map entfernen
+            // 2. URI aus Liste entfernen
+            tracks.removeAt(currentTrackIndex)
+
+            // 3. TrackInfo aus Cache und JSON entfernen
             val infos = cachedTrackInfosByFolder[currentFolder]?.toMutableList()
-            if (infos != null && currentTrackIndex in infos.indices) {
-                infos.removeAt(currentTrackIndex)
+            if (infos != null) {
+                infos.removeIf { it.uri == removedUri }
                 cachedTrackInfosByFolder[currentFolder] = infos
                 TrackInfoStorage.save(this, currentFolder, infos)
             }
 
-            // 3. Index ggf. anpassen
-            if (currentTrackIndex > tracks.lastIndex) {
-                currentTrackIndex = tracks.lastIndex
+            // 4. Index ggf. korrigieren
+            if (tracks.isEmpty()) {
+                currentTrackIndex = -1
+            } else if (currentTrackIndex >= tracks.size) {
+                currentTrackIndex = 0
             }
 
-            // 4. UI aktualisieren
+            // 5. Anzeige aktualisieren
             updateTrackTitleDisplay()
 
             if (tracks.isEmpty()) {
@@ -1282,6 +1304,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
 
     @SuppressLint("DefaultLocale")
     private fun playNextTrack() {
@@ -1720,53 +1743,38 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-//    private fun confirmDeleteCurrentTrack() {
-//        if (tracks.isEmpty() || currentTrackIndex < 0) {
-//            Toast.makeText(this, "⚠️ No Track to delete", Toast.LENGTH_SHORT).show()
-//            return
+//
+//    private fun deleteCurrentTrack() {
+//        val uri = tracks[currentTrackIndex]
+//
+//        try {
+//            val fileName = FolderManager.getFileNameFromUri(uri)
+//            Log.d("EQ-DELETE", "Dateiname: $fileName")
+//
+//            val root = DocumentFile.fromTreeUri(this, baseUri!!)
+//            val targetFolder = root?.findFile(currentFolder)
+//            Log.d("EQ-DELETE", "current folder ($currentFolder): ${targetFolder?.uri}")
+//
+//            val fileToDelete = targetFolder?.listFiles()?.firstOrNull {
+//                it.name.equals(fileName, ignoreCase = true)
+//            }
+//            Log.d("EQ-DELETE", "found file: ${fileToDelete != null}")
+//
+//            if (fileToDelete != null && fileToDelete.delete()) {
+//                Toast.makeText(this, "🗑️ file deleted", Toast.LENGTH_SHORT).show()
+//                loadTracksJob = lifecycleScope.launch {
+//                    loadTracks()
+//                }
+//            } else {
+//                Toast.makeText(this, "❌ delete failed", Toast.LENGTH_SHORT).show()
+//            }
+//
+//        } catch (e: Exception) {
+//            Toast.makeText(this, "❌ delete failed", Toast.LENGTH_SHORT).show()
+//            Log.e("EQ-DELETE", "Exception: ${e.message}")
+//            e.printStackTrace()
 //        }
-//
-//        val fileName = FolderManager.getFileNameFromUri(tracks[currentTrackIndex])
-//
-//        AlertDialog.Builder(this)
-//            .setTitle("Track delete?")
-//            .setMessage("Do you realy want to delete \"$fileName\" ")
-//            .setPositiveButton("delete") { _, _ -> deleteCurrentTrack() }
-//            .setNegativeButton("exit", null)
-//            .show()
 //    }
-
-    private fun deleteCurrentTrack() {
-        val uri = tracks[currentTrackIndex]
-
-        try {
-            val fileName = FolderManager.getFileNameFromUri(uri)
-            Log.d("EQ-DELETE", "Dateiname: $fileName")
-
-            val root = DocumentFile.fromTreeUri(this, baseUri!!)
-            val targetFolder = root?.findFile(currentFolder)
-            Log.d("EQ-DELETE", "current folder ($currentFolder): ${targetFolder?.uri}")
-
-            val fileToDelete = targetFolder?.listFiles()?.firstOrNull {
-                it.name.equals(fileName, ignoreCase = true)
-            }
-            Log.d("EQ-DELETE", "found file: ${fileToDelete != null}")
-
-            if (fileToDelete != null && fileToDelete.delete()) {
-                Toast.makeText(this, "🗑️ file deleted", Toast.LENGTH_SHORT).show()
-                loadTracksJob = lifecycleScope.launch {
-                    loadTracks()
-                }
-            } else {
-                Toast.makeText(this, "❌ delete failed", Toast.LENGTH_SHORT).show()
-            }
-
-        } catch (e: Exception) {
-            Toast.makeText(this, "❌ delete failed", Toast.LENGTH_SHORT).show()
-            Log.e("EQ-DELETE", "Exception: ${e.message}")
-            e.printStackTrace()
-        }
-    }
 
     private fun stopPlayer(startNext: Boolean = false) {
         mediaPlayer?.stop()
