@@ -321,6 +321,7 @@ class ArrangeTracks : AppCompatActivity() {
                 }
             }.toString())
             putExtra("resetArrangeStyle", true) // ✨ wichtig!
+            putExtra("resetPlayback", true)
         }
         setResult(RESULT_OK, resultIntent)
         finish()
